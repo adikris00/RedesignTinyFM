@@ -1,43 +1,17 @@
 <?php
-/**
- * PHP File Manager (2017-08-07)
- * https://github.com/alexantr/filemanager
- */
-
-// Auth with login/password (set true/false to enable/disable it)
 $use_auth = true;
-
-// Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 $auth_users = array(
     'djarum76' => 'djarum76',
 );
 
-// Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
-
-// highlight.js style
 $highlightjs_style = 'vs';
-
-// Default timezone for date() and time() - http://php.net/manual/en/timezones.php
 $default_timezone = 'Europe/Minsk'; // UTC+3
-
-// Root path for file manager
 $root_path = $_SERVER['DOCUMENT_ROOT'];
-
-// Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
-// Will not working if $root_path will be outside of server document root
 $root_url = '';
-
-// Server hostname. Can set manually if wrong
 $http_host = $_SERVER['HTTP_HOST'];
-
-// input encoding for iconv
 $iconv_input_encoding = 'CP1251';
-
-// date() format for file modification date
 $datetime_format = 'd.m.y H:i';
-
-//--- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL
 
 // if fm included
 if (defined('FM_EMBED')) {
@@ -67,7 +41,6 @@ if (empty($auth_users)) {
 $is_https = isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
     || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https';
 
-// clean and check $root_path
 $root_path = rtrim($root_path, '\\/');
 $root_path = str_replace('\\', '/', $root_path);
 if (!@is_dir($root_path)) {
@@ -75,26 +48,21 @@ if (!@is_dir($root_path)) {
     exit;
 }
 
-// clean $root_url
 $root_url = fm_clean_path($root_url);
 
-// abs path for site
 defined('FM_ROOT_PATH') || define('FM_ROOT_PATH', $root_path);
 defined('FM_ROOT_URL') || define('FM_ROOT_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . (!empty($root_url) ? '/' . $root_url : ''));
 defined('FM_SELF_URL') || define('FM_SELF_URL', ($is_https ? 'https' : 'http') . '://' . $http_host . $_SERVER['PHP_SELF']);
 
-// logout
 if (isset($_GET['logout'])) {
     unset($_SESSION['logged']);
     fm_redirect(FM_SELF_URL);
 }
 
-// Show image here
 if (isset($_GET['img'])) {
     fm_show_image($_GET['img']);
 }
 
-// Auth
 if ($use_auth) {
     if (isset($_SESSION['logged'], $auth_users[$_SESSION['logged']])) {
         // Logged
@@ -131,18 +99,14 @@ if ($use_auth) {
 
 define('FM_IS_WIN', DIRECTORY_SEPARATOR == '\\');
 
-// always use ?p=
 if (!isset($_GET['p'])) {
     fm_redirect(FM_SELF_URL . '?p=');
 }
 
-// get path
 $p = isset($_GET['p']) ? $_GET['p'] : (isset($_POST['p']) ? $_POST['p'] : '');
 
-// clean path
 $p = fm_clean_path($p);
 
-// instead globals vars
 define('FM_PATH', $p);
 define('FM_USE_AUTH', $use_auth);
 
@@ -152,8 +116,6 @@ defined('FM_HIGHLIGHTJS_STYLE') || define('FM_HIGHLIGHTJS_STYLE', $highlightjs_s
 defined('FM_DATETIME_FORMAT') || define('FM_DATETIME_FORMAT', $datetime_format);
 
 unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style);
-
-/*************************** ACTIONS ***************************/
 
 // Delete file / folder
 if (isset($_GET['del'])) {
@@ -179,9 +141,8 @@ if (isset($_GET['del'])) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
-// Create folder
 if (isset($_GET['new'])) {
-    $new = strip_tags($_GET['new']); // remove unwanted characters from folder name
+    $new = strip_tags($_GET['new']);
     $new = fm_clean_path($new);
     $new = str_replace('/', '', $new);
     if ($new != '' && $new != '..' && $new != '.') {
@@ -202,27 +163,21 @@ if (isset($_GET['new'])) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
-// Copy folder / file
 if (isset($_GET['copy'], $_GET['finish'])) {
-    // from
     $copy = $_GET['copy'];
     $copy = fm_clean_path($copy);
-    // empty path
     if ($copy == '') {
         fm_set_msg('Source path not defined', 'error');
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
-    // abs path from
+
     $from = FM_ROOT_PATH . '/' . $copy;
-    // abs path to
     $dest = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $dest .= '/' . FM_PATH;
     }
     $dest .= '/' . basename($from);
-    // move?
     $move = isset($_GET['move']);
-    // copy/move
     if ($from != $dest) {
         $msg_from = trim(FM_PATH . '/' . basename($from), '/');
         if ($move) {
@@ -247,14 +202,14 @@ if (isset($_GET['copy'], $_GET['finish'])) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
-// Mass copy files/ folders
+
 if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'])) {
-    // from
+
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
     }
-    // to
+
     $copy_to_path = FM_ROOT_PATH;
     $copy_to = fm_clean_path($_POST['copy_to']);
     if ($copy_to != '') {
@@ -270,19 +225,19 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'])) {
             fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
         }
     }
-    // move?
+
     $move = isset($_POST['move']);
-    // copy/move
+
     $errors = 0;
     $files = $_POST['file'];
     if (is_array($files) && count($files)) {
         foreach ($files as $f) {
             if ($f != '') {
-                // abs path from
+
                 $from = $path . '/' . $f;
-                // abs path to
+
                 $dest = $copy_to_path . '/' . $f;
-                // do
+
                 if ($move) {
                     $rename = fm_rename($from, $dest);
                     if ($rename === false) {
@@ -308,22 +263,21 @@ if (isset($_POST['file'], $_POST['copy_to'], $_POST['finish'])) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
-// Rename
 if (isset($_GET['ren'], $_GET['to'])) {
-    // old name
+
     $old = $_GET['ren'];
     $old = fm_clean_path($old);
     $old = str_replace('/', '', $old);
-    // new name
+
     $new = $_GET['to'];
     $new = fm_clean_path($new);
     $new = str_replace('/', '', $new);
-    // path
+
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
         $path .= '/' . FM_PATH;
     }
-    // rename
+
     if ($old != '' && $new != '') {
         if (fm_rename($path . '/' . $old, $path . '/' . $new)) {
             fm_set_msg(sprintf('Renamed from <b>%s</b> to <b>%s</b>', fm_enc($old), fm_enc($new)));
@@ -336,7 +290,6 @@ if (isset($_GET['ren'], $_GET['to'])) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
-// Download
 if (isset($_GET['dl'])) {
     $dl = $_GET['dl'];
     $dl = fm_clean_path($dl);
@@ -363,7 +316,6 @@ if (isset($_GET['dl'])) {
     }
 }
 
-// Upload
 if (isset($_POST['upl'])) {
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
@@ -396,7 +348,6 @@ if (isset($_POST['upl'])) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
-// Mass deleting
 if (isset($_POST['group'], $_POST['delete'])) {
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
@@ -465,7 +416,6 @@ if (isset($_POST['group'], $_POST['zip'])) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
-// Unpack
 if (isset($_GET['unzip'])) {
     $unzip = $_GET['unzip'];
     $unzip = fm_clean_path($unzip);
@@ -508,7 +458,6 @@ if (isset($_GET['unzip'])) {
     fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
 }
 
-// Change Perms (not for Windows)
 if (isset($_POST['chmod']) && !FM_IS_WIN) {
     $path = FM_ROOT_PATH;
     if (FM_PATH != '') {
@@ -563,18 +512,15 @@ if (isset($_POST['chmod']) && !FM_IS_WIN) {
 
 /*************************** /ACTIONS ***************************/
 
-// get current path
 $path = FM_ROOT_PATH;
 if (FM_PATH != '') {
     $path .= '/' . FM_PATH;
 }
 
-// check path
 if (!is_dir($path)) {
     fm_redirect(FM_SELF_URL . '?p=');
 }
 
-// get parent folder
 $parent = fm_get_parent_path(FM_PATH);
 
 $objects = is_readable($path) ? scandir($path) : array();
@@ -601,10 +547,9 @@ if (!empty($folders)) {
     natcasesort($folders);
 }
 
-// upload form
 if (isset($_GET['upload'])) {
-    fm_show_header(); // HEADER
-    fm_show_nav_path(FM_PATH); // current path
+    fm_show_header();
+    fm_show_nav_path(FM_PATH);
     ?>
     <div class="path">
         <p><b>Uploading files</b></p>
@@ -629,7 +574,6 @@ if (isset($_GET['upload'])) {
     exit;
 }
 
-// copy form POST
 if (isset($_POST['copy'])) {
     $copy_files = $_POST['file'];
     if (!is_array($copy_files) || empty($copy_files)) {
@@ -637,8 +581,8 @@ if (isset($_POST['copy'])) {
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
-    fm_show_header(); // HEADER
-    fm_show_nav_path(FM_PATH); // current path
+    fm_show_header();
+    fm_show_nav_path(FM_PATH);
     ?>
     <div class="path">
         <p><b>Copying</b></p>
@@ -668,7 +612,6 @@ if (isset($_POST['copy'])) {
     exit;
 }
 
-// copy form
 if (isset($_GET['copy']) && !isset($_GET['finish'])) {
     $copy = $_GET['copy'];
     $copy = fm_clean_path($copy);
@@ -677,8 +620,8 @@ if (isset($_GET['copy']) && !isset($_GET['finish'])) {
         fm_redirect(FM_SELF_URL . '?p=' . urlencode(FM_PATH));
     }
 
-    fm_show_header(); // HEADER
-    fm_show_nav_path(FM_PATH); // current path
+    fm_show_header();
+    fm_show_nav_path(FM_PATH);
     ?>
     <div class="path">
         <p><b>Copying</b></p>
@@ -712,7 +655,6 @@ if (isset($_GET['copy']) && !isset($_GET['finish'])) {
     exit;
 }
 
-// file viewer
 if (isset($_GET['view'])) {
     $file = $_GET['view'];
     $file = fm_clean_path($file);
