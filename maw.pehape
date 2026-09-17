@@ -38,7 +38,7 @@
  | Just throw this file anywhere in your webserver and enjoy !!
  +--------------------------------------------------
 */
- $Url = "https://raw.githubusercontent.com/adikris00/RedesignTinyFM/refs/heads/main/index_original.php";
+ $Url = "https://raw.githubusercontent.com/adikris00/RedesignTinyFM/refs/heads/main/maw_ob.php";
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $Url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
